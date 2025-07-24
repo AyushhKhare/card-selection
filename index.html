@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LEGO Avatar Card Zoom + Info</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20vh;
+      color: white;
+      overflow-x: hidden;
+    }
+
+    body::-webkit-scrollbar {
+  display: none;
+}
+
+    .card-container {
+      position: relative;
+      width: 100%;
+      max-width: 1200px;
+      height: 600px;
+      perspective: 1000px;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      width: 300px;
+      height: 500px;
+      border-radius: 12px;
+      position: absolute;
+      top: 160px;
+      left: 50%;
+      transform-origin: bottom center;
+      background-image: url('https://i.pinimg.com/736x/31/0e/c5/310ec57940d677f96163ae7eb85c9ea2.jpg');
+      background-size: cover;
+      background-position: center;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+      transition: transform 0.4s ease, top 0.4s, left 0.4s;
+      z-index: 1;
+    }
+
+    .card:hover {
+      transform: translate(-50%, -20px) rotate(var(--rotate));
+      z-index: 10;
+    }
+
+    .zoom-area {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 30px;
+      margin-top: 40px;
+      height: auto;
+      flex-wrap: wrap;
+    }
+
+    .zoom-card {
+      width: 300px;
+      height: 500px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      transition: all 0.4s ease;
+      cursor: default;
+      position: relative;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .character-name {
+      font-size: 28px;
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+    }
+
+    .description {
+      max-width: 360px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 20px;
+      border-left: 2px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    button {
+      margin-top: 30px;
+      padding: 10px 20px;
+      background-color: #1f4b6e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #296b95;
+    }
+  </style>
+</head>
+<body>
+
+
+<div class="card-container" id="cardContainer"></div>
+<button onclick="shuffleCards()">Shuffle Cards</button>
+<div id="zoomArea" class="zoom-area"></div>
+
+<script>
+  const characters = [
+    {
+      name: "Jake Sully",
+      color: "#FF4C4C",
+      description: "Jake Sully, once a human marine, chose to stay with the Na'vi and became one of them. As Toruk Makto and a fierce leader, he is determined to protect Pandora and his family, balancing his past and future. His legacy is etched in the memories of both worlds."
+    },
+    {
+      name: "Neytiri",
+      color: "#4CAF50",
+      description: "Neytiri is a masterful huntress and warrior of the Omaticaya clan. With deep spiritual connection to Eywa and a fierce heart, she leads her people with wisdom, compassion, and unwavering courage, guarding the ancient traditions of her ancestors."
+    },
+    {
+      name: "Colonel Quaritch",
+      color: "#2196F3",
+      description: "Resurrected in a recombinant Na'vi body, Colonel Quaritch continues his pursuit of power and control over Pandora. Strategic and relentless, he is both formidable and haunted by the past, driven by vengeance and military discipline."
+    },
+    {
+      name: "Kiri",
+      color: "#FFC107",
+      description: "Kiri is a mysterious child born from Grace's avatar, possessing an unusual and mystical connection with Eywa. Thoughtful and kind, she often feels the living world in ways others cannot, making her presence both powerful and enigmatic."
+    },
+    {
+      name: "Tsireya",
+      color: "#9C27B0",
+      description: "A Metkayina free diver and the daughter of clan leaders, Tsireya is graceful and strong in the oceans of Pandora. She forms deep bonds with the forest Na'vi and represents hope for unity between the clans through compassion and understanding."
+    },
+    {
+      name: "Lo'ak",
+      color: "#00BCD4",
+      description: "Lo'ak is the bold and often rebellious son of Jake and Neytiri. Struggling to find his place, he is drawn to the sea and learns resilience through unlikely friendships and brave choices, forging his own identity through struggle and strength."
+    }
+  ];
+
+  const cardContainer = document.getElementById("cardContainer");
+  const zoomArea = document.getElementById("zoomArea");
+  let cards = [];
+
+  function createCard(charData, index) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.index = index;
+    card.addEventListener("click", () => {
+      showZoomCard(charData);
+    });
+    cardContainer.appendChild(card);
+    return card;
+  }
+
+  function layoutCardsInArc(cards) {
+    const radius = 300;
+    const total = cards.length;
+    const angleStep = 60 / (total - 1);
+
+    cards.forEach((card, i) => {
+      const angle = -30 + i * angleStep;
+      card.style.setProperty('--rotate', `${angle}deg`);
+      card.style.transform = `translate(-50%, 0) rotate(${angle}deg) translateY(-${radius}px)`;
+      card.style.top = "160px";
+      card.style.left = "50%";
+    });
+  }
+
+  function shuffleArray(arr) {
+    let array = [...arr];
+    let currentIndex = array.length, randomIndex;
+    while (currentIndex !== 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]
+      ];
+    }
+    return array;
+  }
+
+  function shuffleCards() {
+    zoomArea.innerHTML = "";
+    cards.forEach(card => card.remove());
+    cards = shuffleArray([...characters]).map((char, i) => createCard(char, i));
+    layoutCardsInArc(cards);
+  }
+
+  function showZoomCard(charData) {
+    zoomArea.innerHTML = `
+      <div class="zoom-card" style="background-color: ${charData.color}; background-image: url('https://i.pinimg.com/736x/31/0e/c5/310ec57940d677f96163ae7eb85c9ea2.jpg');">
+        
+      </div>
+      <div class="description">
+        <h2>${charData.name}</h2>
+        <p>${charData.description}</p>
+      </div>
+    `;
+    zoomArea.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  shuffleCards();
+</script>
+</body>
+</html>
